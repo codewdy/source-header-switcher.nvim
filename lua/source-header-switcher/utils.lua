@@ -71,6 +71,9 @@ local function async_walk(dir, callback)
       stdio = {nil, stdout, nil}
     },
     vim.schedule_wrap(function()
+      pcall(function() stdout:read_stop() end)
+      pcall(function() stdout:close() end)
+      pcall(function() handle:close() end)
       if whole_err ~= nil then
         callback(whole_err, {})
       else
@@ -83,9 +86,6 @@ local function async_walk(dir, callback)
         end
         callback(nil, results)
       end
-      stdout:read_stop()
-      stdout:close()
-      handle:close()
     end)
   )
   vim.loop.read_start(stdout, onread)
