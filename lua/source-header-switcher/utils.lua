@@ -54,19 +54,14 @@ local function string_split(str, seps)
 end
 
 local function async_walk(dir, callback)
+  local whole_err = nil
+  local datas = ""
   local function onread(err, data)
     if err then
-      return callback(err, nil)
+      whole_err = err
     end
     if data then
-      local results = {}
-      local vals = vim.split(data, "\n")
-      for _, d in pairs(vals) do
-        if d ~= "" then
-          table.insert(results, d)
-        end
-      end
-      callback(nil, results)
+      datas = datas .. data
     end
   end
 
@@ -76,6 +71,18 @@ local function async_walk(dir, callback)
       stdio = {nil, stdout, nil}
     },
     vim.schedule_wrap(function()
+      if whole_err ~= nil then
+        callback(whole_err, {})
+      else
+        local results = {}
+        local vals = vim.split(datas, "\n")
+        for _, d in pairs(vals) do
+          if d ~= "" then
+            table.insert(results, d)
+          end
+        end
+        callback(nil, results)
+      end
       stdout:read_stop()
       stdout:close()
       handle:close()
